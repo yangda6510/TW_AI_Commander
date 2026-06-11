@@ -1,5 +1,28 @@
 import pandas as pd
 
+# =========================
+# 台股生命爆發 AI 操盤總司令
+# V1.8 操盤實戰版：S/A 評級校正版
+# =========================
+
+def _to_bool(v):
+    if isinstance(v, bool):
+        return v
+    if pd.isna(v):
+        return False
+    s = str(v).strip().lower()
+    return s in ["true", "1", "yes", "y", "v", "✓", "✅", "是"]
+
+
+def _to_num(v, default=0):
+    try:
+        if pd.isna(v):
+            return default
+        return float(v)
+    except Exception:
+        return default
+
+
 def compute_indicators(hist):
     if hist is None or hist.empty or len(hist) < 20:
         return {}
@@ -13,14 +36,15 @@ def compute_indicators(hist):
     ma10 = float(close.rolling(10).mean().iloc[-1]) if len(h) >= 10 else 0
     ma20 = float(close.rolling(20).mean().iloc[-1]) if len(h) >= 20 else 0
     ma60 = float(close.rolling(60).mean().iloc[-1]) if len(h) >= 60 else 0
+
     ma20_prev = float(close.rolling(20).mean().iloc[-2]) if len(h) >= 21 else ma20
     ma60_prev = float(close.rolling(60).mean().iloc[-2]) if len(h) >= 61 else ma60
+
     high20 = float(close.iloc[-21:-1].max()) if len(h) >= 21 else float(close.max())
     vol20 = float(volume.rolling(20).mean().iloc[-1]) if len(h) >= 20 else 0
     last_vol = float(volume.iloc[-1]) if len(h) else 0
     volume_ratio = round(last_vol / vol20, 2) if vol20 > 0 else 0
 
-    # 扣低：現在價格 > N日前價格，視為未來扣低較有利
     day_low = bool(len(h) >= 21 and last_close > float(close.iloc[-20]))
     week_low = bool(len(h) >= 61 and last_close > float(close.iloc[-60]))
     month_low = bool(len(h) >= 121 and last_close > float(close.iloc[-120]))
@@ -62,205 +86,189 @@ def compute_indicators(hist):
         "20MA大於60MA": ma20 > ma60 if ma60 > 0 else False,
     }
 
-def calc_life(row):
 
+def calc_life(row):
     score = 0
 
-    # =====================
-    # 趨勢引擎 25
-    # =====================
-
-    if row.get("站上20MA", False):
+    if _to_bool(row.get("站上20MA", False)):
+        score += 5
+    if _to_bool(row.get("20MA大於60MA", False)):
+        score += 5
+    if _to_bool(row.get("多頭排列", False)):
+        score += 5
+    if _to_bool(row.get("20MA上揚", False)):
+        score += 5
+    if _to_bool(row.get("60MA上揚", False)):
         score += 5
 
-    if row.get("20MA大於60MA", False):
+    if _to_bool(row.get("日扣低", False)):
         score += 5
-
-    if row.get("多頭排列", False):
-        score += 5
-
-    if row.get("20MA上揚", False):
-        score += 5
-
-    if row.get("60MA上揚", False):
-        score += 5
-
-
-    # =====================
-    # 扣低引擎 37
-    # =====================
-
-    if row.get("日扣低", False):
-        score += 5
-
-    if row.get("週扣低", False):
+    if _to_bool(row.get("週扣低", False)):
         score += 8
-
-    if row.get("月扣低", False):
+    if _to_bool(row.get("月扣低", False)):
         score += 12
 
-
-    if row.get("日剛轉扣低", False):
+    if _to_bool(row.get("日剛轉扣低", False)):
         score += 2
-
-    if row.get("週剛轉扣低", False):
+    if _to_bool(row.get("週剛轉扣低", False)):
         score += 4
-
-    if row.get("月剛轉扣低", False):
+    if _to_bool(row.get("月剛轉扣低", False)):
         score += 6
 
-
-    # =====================
-    # 真突破引擎 15
-    # =====================
-
-    if row.get("突破20日高", False):
+    if _to_bool(row.get("突破20日高", False)):
         score += 5
-
-    if row.get("真突破", False):
+    if _to_bool(row.get("真突破", False)):
         score += 10
 
-
-    # =====================
-    # 量能引擎 13
-    # =====================
-
-    vr = row.get("量比", 0)
-
+    vr = _to_num(row.get("量比", 0))
     if vr >= 1.2:
         score += 3
-
     if vr >= 1.5:
         score += 5
-
     if vr >= 2:
         score += 5
 
-
-    # =====================
-    # 安全分 10
-    # =====================
-
-    dev = row.get("20MA乖離%", 999)
-
+    dev = _to_num(row.get("20MA乖離%", 999), 999)
     if dev <= 5:
         score += 10
-
     elif dev <= 10:
         score += 5
 
-
     return max(0, min(100, round(score, 0)))
 
-    return max(0, min(100, round(score, 0)))
 
 def calc_power(row):
-
     power = 0
 
-
-    # =====================
-    # 扣低強度 50
-    # =====================
-
-    if row.get("月扣低", False):
+    if _to_bool(row.get("月扣低", False)):
         power += 25
-
-    if row.get("週扣低", False):
+    if _to_bool(row.get("週扣低", False)):
         power += 15
-
-    if row.get("日扣低", False):
+    if _to_bool(row.get("日扣低", False)):
         power += 10
 
-
-    if row.get("月剛轉扣低", False):
+    if _to_bool(row.get("月剛轉扣低", False)):
         power += 10
-
-    if row.get("週剛轉扣低", False):
+    if _to_bool(row.get("週剛轉扣低", False)):
         power += 6
-
-    if row.get("日剛轉扣低", False):
+    if _to_bool(row.get("日剛轉扣低", False)):
         power += 4
 
-
-    # =====================
-    # 突破 20
-    # =====================
-
-    if row.get("突破20日高", False):
+    if _to_bool(row.get("突破20日高", False)):
         power += 5
-
-    if row.get("真突破", False):
+    if _to_bool(row.get("真突破", False)):
         power += 15
 
-
-    # =====================
-    # 量能 20
-    # =====================
-
-    vr = row.get("量比", 0)
-
+    vr = _to_num(row.get("量比", 0))
     if vr >= 1.2:
         power += 5
-
     if vr >= 1.5:
         power += 5
-
     if vr >= 2:
         power += 10
 
-
-    # =====================
-    # 趨勢加速 10
-    # =====================
-
-    if row.get("20MA上揚", False):
+    if _to_bool(row.get("20MA上揚", False)):
         power += 5
-
-    if row.get("60MA上揚", False):
+    if _to_bool(row.get("60MA上揚", False)):
         power += 5
-
 
     return max(0, min(100, round(power, 0)))
 
-def calc_grade(row):
 
-    life = row.get("生命值", 0)
-    power = row.get("馬力", 0)
-    deduct = row.get("扣低共振", 0)
+def calc_grade(row):
+    life = _to_num(row.get("生命值", 0))
+    power = _to_num(row.get("馬力", 0))
+    deduct = _to_num(row.get("扣低共振", 0))
+    vr = _to_num(row.get("量比", 0))
+    dev = _to_num(row.get("20MA乖離%", 999), 999)
+
+    true_breakout = _to_bool(row.get("真突破", False))
+    breakout20 = _to_bool(row.get("突破20日高", False))
+    stand20 = _to_bool(row.get("站上20MA", False))
+    ma20_up = _to_bool(row.get("20MA上揚", False))
+    ma60_up = _to_bool(row.get("60MA上揚", False))
+    bull = _to_bool(row.get("多頭排列", False))
+    ma20_gt_ma60 = _to_bool(row.get("20MA大於60MA", False))
+
+    safe_not_hot = dev <= 12
+    not_too_cold = stand20 or ma20_up
 
     if (
-        life >= 90
+        life >= 82
         and power >= 85
         and deduct >= 2
-        and row.get("真突破", False)
+        and true_breakout
+        and safe_not_hot
+        and not_too_cold
     ):
         return "S"
 
-    elif (
-        life >= 80
+    strong_setup = (
+        life >= 75
         and power >= 70
-    ):
+        and deduct >= 2
+        and safe_not_hot
+        and not_too_cold
+    )
+
+    breakout_setup = (
+        life >= 70
+        and power >= 75
+        and deduct >= 2
+        and (breakout20 or true_breakout or vr >= 1.5)
+        and safe_not_hot
+        and not_too_cold
+    )
+
+    trend_setup = (
+        life >= 72
+        and power >= 65
+        and deduct >= 2
+        and ma20_up
+        and (ma60_up or ma20_gt_ma60 or bull)
+        and safe_not_hot
+    )
+
+    if strong_setup or breakout_setup or trend_setup:
         return "A"
 
-    elif (
-        life >= 70
-        and power >= 60
+    if (
+        life >= 60
+        and power >= 55
+        and (deduct >= 2 or stand20 or ma20_up)
     ):
         return "B"
 
     return "X"
 
+
 def calc_status(row):
     grade = row.get("等級", "X")
-    deduct = row.get("扣低共振", 0)
+    life = _to_num(row.get("生命值", 0))
+    power = _to_num(row.get("馬力", 0))
+    deduct = _to_num(row.get("扣低共振", 0))
+    true_breakout = _to_bool(row.get("真突破", False))
+    dev = _to_num(row.get("20MA乖離%", 999), 999)
 
     if grade == "S":
         return "🚀 主升攻擊"
+
     if grade == "A":
-        return "🔥 強勢整理"
-    if grade == "B" and deduct >= 2:
-        return "🌱 準備發動"
+        if true_breakout:
+            return "🔥 真突破"
+        if deduct >= 3 and power >= 75:
+            return "🔥 強勢整理"
+        return "🟢 可布局"
+
     if grade == "B":
+        if deduct >= 2:
+            return "🌱 準備發動"
         return "👀 觀察整理"
-    return "🔴 轉弱"
+
+    if dev > 15:
+        return "⚠️ 乖離過大"
+
+    if life < 45 or power < 45:
+        return "🔴 轉弱"
+
+    return "🔴 暫不看"
