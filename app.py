@@ -33,17 +33,6 @@ with st.sidebar:
     refresh_min = st.selectbox("更新頻率", [1, 3, 5, 10, 15], index=2)
     only_market = st.checkbox("只在 08:45~13:35 更新", value=True)
 
-    if auto_refresh:
-        allow_refresh = in_trading_time() if only_market else True
-        if allow_refresh:
-            st.success(f"自動更新中：每 {refresh_min} 分鐘")
-            components.html(
-                f"<script>setTimeout(function(){{window.parent.location.reload();}}, {refresh_min * 60 * 1000});</script>",
-                height=0
-            )
-        else:
-            st.info("非盤中時間，暫停自動更新。")
-
     pool = read_pool_from_csv_file("stock_pool.csv")
 
     DEFAULT_STOCKS = min(80, len(pool))
