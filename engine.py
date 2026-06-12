@@ -191,35 +191,38 @@ def calc_grade(row):
     ma20_up = bool(row.get("20MA上揚", False))
     ma60_up = bool(row.get("60MA上揚", False))
 
-    # ===== S級 =====
-    if (
-        life >= 75
-        and power >= 80
-        and deduct >= 2
-        and vr >= 1.5
-        and (true_breakout or breakout20)
-        and dev <= 15
-    ):
-        return "S"
+    # ===== S級：第一波起漲 =====
+    # ===== S級：第一波起漲 =====
+if (
+    life >= 72
+    and power >= 75
+    and deduct >= 3
+    and vr >= 1.2
+    and dev <= 12
+    and (
+        ma20_up
+        or breakout20
+        or true_breakout
+    )
+):
+    return "S"
 
-    # ===== A級 =====
     if (
-        life >= 60
-        and power >= 70
-        and deduct >= 2
-        and vr >= 1.2
-        and (ma20_up or stand20)
-        and dev <= 20
-    ):
-        return "A"
+    life >= 65
+    and power >= 70
+    and deduct >= 2
+    and vr >= 1.2
+    and (ma20_up or stand20)
+    and dev <= 20
+):
+    return "A"
 
-    # ===== B級 =====
     if (
-        life >= 55
-        and power >= 55
-        and deduct >= 2
-    ):
-        return "B"
+    life >= 55
+    and power >= 55
+    and deduct >= 2
+):
+    return "B"
 
     return "X"
 
@@ -238,7 +241,7 @@ def calc_status(row):
     dev = float(row.get("20MA乖離%", 999))
 
     if grade == "S":
-        return "🚀 主升攻擊"
+       return "🚀 第一波起漲"
 
     if grade == "A":
 
