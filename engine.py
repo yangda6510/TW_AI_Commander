@@ -2,7 +2,7 @@ import pandas as pd
 
 # =========================
 # 台股生命爆發 AI 操盤總司令
-# V1.8 操盤實戰版：S/A 評級校正版
+# V2.0 操盤實戰版：S/A 評級校正版
 # =========================
 
 
@@ -204,7 +204,7 @@ def calc_grade(row):
 
     # ===== A級 =====
     if (
-        life >= 65
+        life >= 60
         and power >= 70
         and deduct >= 2
         and vr >= 1.2
