@@ -3,6 +3,10 @@ from datetime import datetime
 
 now = datetime.now(ZoneInfo("Asia/Taipei"))
 
+def in_trading_time():
+    now = datetime.now(ZoneInfo("Asia/Taipei")).time()
+    return time(8, 45) <= now <= time(13, 35)
+
 
 
 import streamlit as st
@@ -13,14 +17,14 @@ import streamlit.components.v1 as components
 from data_loader import read_pool_from_csv_file, fetch_official_quotes, fetch_history
 from engine import compute_indicators, calc_life, calc_power, calc_grade, calc_status
 
-st.set_page_config(page_title="台股生命爆發 AI 操盤總司令 V1.5", layout="wide")
+st.set_page_config( page_title="台股生命爆發 AI 操盤總司令 V2.0", page_icon="🚀", layout="wide", initial_sidebar_state="collapsed")
 
-st.title("🚀 台股生命爆發 AI 操盤總司令 V1.5")
+st.title("🚀 台股生命爆發 AI 操盤總司令 V1.8")
 st.caption("自動更新版：TWSE + TPEx + 歷史K快取 + 20MA/60MA/20日高 + 生命值/馬力")
+taipei_now = datetime.now(ZoneInfo("Asia/Taipei"))
 
-def in_trading_time():
-    now = now.strftime("%Y-%m-%d %H:%M:%S").time()
-    return time(8, 45) <= now <= time(13, 35)
+st.info( f"🇹🇼 台灣時間：{taipei_now.strftime('%Y-%m-%d %H:%M:%S')}")
+
 
 with st.sidebar:
     st.header("設定")
@@ -41,7 +45,15 @@ with st.sidebar:
             st.info("非盤中時間，暫停自動更新。")
 
     pool = read_pool_from_csv_file("stock_pool.csv")
-    max_stocks = st.slider("本次計算檔數", 20, len(pool), min(80, len(pool)), step=10)
+    DEFAULT_STOCKS = min(80, len(pool))
+
+max_stocks = st.slider(
+    "本次計算檔數",
+    20,
+    len(pool),
+    DEFAULT_STOCKS,
+    step=10
+)
     force_reload = st.checkbox("強制重抓歷史K", value=False)
     st.info("第一次抓歷史K會比較慢。建議先跑80檔，確認成功後再拉到全部。")
 
@@ -94,6 +106,7 @@ for i, row in df.iterrows():
 status_box.empty()
 progress.empty()
 
+update_time = datetime.now(ZoneInfo("Asia/Taipei")).strftime("%H:%M:%S")
 result = pd.DataFrame(rows)
 
 for c in ["收盤價", "成交金額", "漲跌幅", "生命值", "馬力", "量比", "20MA乖離%"]:
@@ -116,14 +129,15 @@ with tabs[0]:
     c3.metric("平均馬力", avg_power)
     c4.metric("S/A", f"{s_count}/{a_count}")
     c5.metric("扣低共振≥2", deduct_count)
+    st.caption(f"📈 最後更新：{update_time}")
 
     if quote_errors:
         with st.expander("官方行情警告"):
             for e in quote_errors:
                 st.write(e)
 
-    st.subheader("🔥 今日 TOP 30")
-    top = result.sort_values(["生命值", "馬力"], ascending=False).head(30)
+    st.subheader("🔥 今日 TOP 20")
+    top = result.sort_values(["生命值","馬力","扣低共振"], ascending=False).head(30)
     cols = [c for c in ["代號", "名稱", "族群", "市場", "收盤價", "漲跌幅", "生命值", "馬力", "等級", "狀態", "扣低共振", "量比", "20MA乖離%"] if c in top.columns]
     st.dataframe(top[cols], use_container_width=True, hide_index=True)
 
@@ -159,4 +173,4 @@ with tabs[5]:
     st.subheader("📋 原始資料")
     st.dataframe(result, use_container_width=True, hide_index=True)
 
-st.caption("V1.5：盤中自動更新版。建議盤中每5分鐘更新；歷史K快取12小時。")
+st.caption("V2.0 正式版：第一波起漲 × 扣低共振 × 不追高。建議盤中每5分鐘更新；歷史K快取12小時。")

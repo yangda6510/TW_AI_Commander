@@ -5,6 +5,7 @@ import pandas as pd
 # V1.8 操盤實戰版：S/A 評級校正版
 # =========================
 
+
 def _to_bool(v):
     if isinstance(v, bool):
         return v
