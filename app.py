@@ -1,3 +1,11 @@
+import pytz
+from datetime import datetime
+
+taipei = pytz.timezone("Asia/Taipei")
+now = datetime.now(taipei)
+
+
+
 import streamlit as st
 import pandas as pd
 from datetime import datetime, time
@@ -12,7 +20,7 @@ st.title("🚀 台股生命爆發 AI 操盤總司令 V1.5")
 st.caption("自動更新版：TWSE + TPEx + 歷史K快取 + 20MA/60MA/20日高 + 生命值/馬力")
 
 def in_trading_time():
-    now = datetime.now().time()
+    now = now.strftime("%Y-%m-%d %H:%M:%S").time()
     return time(8, 45) <= now <= time(13, 35)
 
 with st.sidebar:
