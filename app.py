@@ -44,16 +44,18 @@ with st.sidebar:
         else:
             st.info("非盤中時間，暫停自動更新。")
 
-    pool = read_pool_from_csv_file("stock_pool.csv")
+        pool = read_pool_from_csv_file("stock_pool.csv")
+
     DEFAULT_STOCKS = min(80, len(pool))
 
-max_stocks = st.slider(
-    "本次計算檔數",
-    20,
-    len(pool),
-    DEFAULT_STOCKS,
-    step=10
-)
+    max_stocks = st.slider(
+        "本次計算檔數",
+        20,
+        len(pool),
+        DEFAULT_STOCKS,
+        step=10
+    )
+
     force_reload = st.checkbox("強制重抓歷史K", value=False)
     st.info("第一次抓歷史K會比較慢。建議先跑80檔，確認成功後再拉到全部。")
 
