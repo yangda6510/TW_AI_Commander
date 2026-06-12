@@ -44,7 +44,7 @@ with st.sidebar:
         else:
             st.info("非盤中時間，暫停自動更新。")
 
-        pool = read_pool_from_csv_file("stock_pool.csv")
+    pool = read_pool_from_csv_file("stock_pool.csv")
 
     DEFAULT_STOCKS = min(80, len(pool))
 
