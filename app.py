@@ -1,8 +1,7 @@
-import pytz
+from zoneinfo import ZoneInfo
 from datetime import datetime
 
-taipei = pytz.timezone("Asia/Taipei")
-now = datetime.now(taipei)
+now = datetime.now(ZoneInfo("Asia/Taipei"))
 
 
 
