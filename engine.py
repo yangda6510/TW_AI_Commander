@@ -177,66 +177,47 @@ def calc_power(row):
 
 
 def calc_grade(row):
-    life = _to_num(row.get("生命值", 0))
-    power = _to_num(row.get("馬力", 0))
-    deduct = _to_num(row.get("扣低共振", 0))
-    vr = _to_num(row.get("量比", 0))
-    dev = _to_num(row.get("20MA乖離%", 999), 999)
 
-    true_breakout = _to_bool(row.get("真突破", False))
-    breakout20 = _to_bool(row.get("突破20日高", False))
-    stand20 = _to_bool(row.get("站上20MA", False))
-    ma20_up = _to_bool(row.get("20MA上揚", False))
-    ma60_up = _to_bool(row.get("60MA上揚", False))
-    bull = _to_bool(row.get("多頭排列", False))
-    ma20_gt_ma60 = _to_bool(row.get("20MA大於60MA", False))
+    life = float(row.get("生命值", 0))
+    power = float(row.get("馬力", 0))
+    deduct = int(row.get("扣低共振", 0))
+    vr = float(row.get("量比", 0))
+    dev = float(row.get("20MA乖離%", 999))
 
-    safe_not_hot = dev <= 12
-    not_too_cold = stand20 or ma20_up
+    true_breakout = bool(row.get("真突破", False))
+    breakout20 = bool(row.get("突破20日高", False))
 
+    stand20 = bool(row.get("站上20MA", False))
+    ma20_up = bool(row.get("20MA上揚", False))
+    ma60_up = bool(row.get("60MA上揚", False))
+
+    # ===== S級 =====
     if (
-        life >= 82
-        and power >= 85
+        life >= 75
+        and power >= 80
         and deduct >= 2
-        and true_breakout
-        and safe_not_hot
-        and not_too_cold
+        and vr >= 1.5
+        and (true_breakout or breakout20)
+        and dev <= 15
     ):
         return "S"
 
-    strong_setup = (
-        life >= 75
+    # ===== A級 =====
+    if (
+        life >= 65
         and power >= 70
         and deduct >= 2
-        and safe_not_hot
-        and not_too_cold
-    )
-
-    breakout_setup = (
-        life >= 70
-        and power >= 75
-        and deduct >= 2
-        and (breakout20 or true_breakout or vr >= 1.5)
-        and safe_not_hot
-        and not_too_cold
-    )
-
-    trend_setup = (
-        life >= 72
-        and power >= 65
-        and deduct >= 2
-        and ma20_up
-        and (ma60_up or ma20_gt_ma60 or bull)
-        and safe_not_hot
-    )
-
-    if strong_setup or breakout_setup or trend_setup:
+        and vr >= 1.2
+        and (ma20_up or stand20)
+        and dev <= 20
+    ):
         return "A"
 
+    # ===== B級 =====
     if (
-        life >= 60
+        life >= 55
         and power >= 55
-        and (deduct >= 2 or stand20 or ma20_up)
+        and deduct >= 2
     ):
         return "B"
 
@@ -244,29 +225,36 @@ def calc_grade(row):
 
 
 def calc_status(row):
+
     grade = row.get("等級", "X")
-    life = _to_num(row.get("生命值", 0))
-    power = _to_num(row.get("馬力", 0))
-    deduct = _to_num(row.get("扣低共振", 0))
-    true_breakout = _to_bool(row.get("真突破", False))
-    dev = _to_num(row.get("20MA乖離%", 999), 999)
+
+    life = float(row.get("生命值", 0))
+    power = float(row.get("馬力", 0))
+
+    deduct = int(row.get("扣低共振", 0))
+
+    true_breakout = bool(row.get("真突破", False))
+
+    dev = float(row.get("20MA乖離%", 999))
 
     if grade == "S":
         return "🚀 主升攻擊"
 
     if grade == "A":
+
         if true_breakout:
             return "🔥 真突破"
-        if deduct >= 3 and power >= 75:
-            return "🔥 強勢整理"
+
         return "🟢 可布局"
 
     if grade == "B":
-        if deduct >= 2:
+
+        if deduct >= 3:
             return "🌱 準備發動"
+
         return "👀 觀察整理"
 
-    if dev > 15:
+    if dev > 20:
         return "⚠️ 乖離過大"
 
     if life < 45 or power < 45:
