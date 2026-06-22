@@ -1,5 +1,7 @@
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -51,7 +53,7 @@ def pick_col(df, candidates):
 
 
 def fetch_json(url, timeout=20):
-    r = requests.get(url, headers=HEADERS, timeout=timeout)
+    r = requests.get(url, headers=HEADERS, timeout=20, verify=False)
     r.raise_for_status()
     return r.json()
 
@@ -253,12 +255,12 @@ def fetch_yahoo_history(code, market):
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=8mo&interval=1d&events=history"
         try:
             resp = requests.get(
-                  url,
-                  timeout=20,
-                   verify=False
+                url,
+                timeout=20,
+                verify=False
             )
-            r.raise_for_status()
-            j = r.json()
+            resp.raise_for_status()
+            j = resp.json()
             result = j.get("chart", {}).get("result", [])
             if not result:
                 continue
