@@ -1,3 +1,5 @@
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -250,7 +252,11 @@ def fetch_yahoo_history(code, market):
         symbol = f"{code}{suffix}"
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=8mo&interval=1d&events=history"
         try:
-            r = requests.get(url, headers=HEADERS, timeout=20)
+            resp = requests.get(
+                  url,
+                  timeout=20,
+                   verify=False
+            )
             r.raise_for_status()
             j = r.json()
             result = j.get("chart", {}).get("result", [])
