@@ -305,21 +305,14 @@ def get_last_month_starts(months=5):
 
 def fetch_history(code, market, months=5, force=False):
     cache_file = CACHE_DIR / f"{code}_{market}_hist.csv"
+
     if cache_file.exists() and not force:
-        mtime = datetime.fromtimestamp(cache_file.stat().st_mtime)
-        if cache_file.exists() and not force:
-    try:
-        df = pd.read_csv(cache_file, parse_dates=["日期"])
-        if len(df) >= 20:
-            return df.sort_values("日期").tail(180), None
-    except Exception:
-        pass
-            try:
-                df = pd.read_csv(cache_file, parse_dates=["日期"])
-                if len(df) >= 20:
-                    return df.sort_values("日期").tail(180), None
-            except Exception:
-                pass
+        try:
+            df = pd.read_csv(cache_file, parse_dates=["日期"])
+            if len(df) >= 20:
+                return df.sort_values("日期").tail(180), None
+        except Exception:
+            pass
 
     frames = []
     err = None
