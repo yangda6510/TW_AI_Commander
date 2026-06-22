@@ -1,5 +1,9 @@
 from zoneinfo import ZoneInfo
 from datetime import datetime
+from datetime import date
+
+import os
+import pickle
 
 now = datetime.now(ZoneInfo("Asia/Taipei"))
 
@@ -7,6 +11,26 @@ def in_trading_time():
     now = datetime.now(ZoneInfo("Asia/Taipei")).time()
     return time(8, 45) <= now <= time(13, 35)
 
+CACHE_DIR = "cache"
+CACHE_FILE = os.path.join(CACHE_DIR, "history_cache_v19.pkl")
+
+os.makedirs(CACHE_DIR, exist_ok=True)
+
+def load_history_cache():
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, "rb") as f:
+                return pickle.load(f)
+        except:
+            return {}
+    return {}
+
+def save_history_cache(cache):
+    try:
+        with open(CACHE_FILE, "wb") as f:
+            pickle.dump(cache, f)
+    except:
+        pass
 
 
 import streamlit as st
@@ -164,4 +188,4 @@ with tabs[5]:
     st.subheader("📋 原始資料")
     st.dataframe(result, use_container_width=True, hide_index=True)
 
-st.caption("V2.0 正式版：第一波起漲 × 扣低共振 × 不追高。建議盤中每5分鐘更新；歷史K快取12小時。")
+st.caption("V1.9 歷史K永久快取版：第一次抓完整K，之後直接讀快取；勾選強制重抓才重新下載。")
