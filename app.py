@@ -93,6 +93,8 @@ df = pool.merge(quote_df, on="代號", how="left", suffixes=("_池", ""))
 if "名稱池" in df.columns:
     df["名稱"] = df["名稱"].fillna(df["名稱池"]) if "名稱" in df.columns else df["名稱池"]
 
+history_cache = load_history_cache()
+
 rows = []
 progress = st.progress(0)
 status_box = st.empty()
@@ -103,7 +105,22 @@ for i, row in df.iterrows():
     name = row.get("名稱", "")
     status_box.caption(f"計算中：{code} {name} ({i+1}/{len(df)})")
 
-    hist, err = fetch_history(code, market, months=5, force=force_reload)
+    cache_key = f"{code}_{market}_5"
+
+    if (not force_reload) and (cache_key in history_cache):
+        hist = history_cache[cache_key]
+        err = ""
+    else:
+        hist, err = fetch_history(
+            code,
+            market,
+            months=5,
+            force=force_reload
+        )
+
+        if hist is not None and not hist.empty:
+            history_cache[cache_key] = hist
+
     ind = compute_indicators(hist)
 
     data = row.to_dict()
@@ -120,6 +137,8 @@ for i, row in df.iterrows():
 
 status_box.empty()
 progress.empty()
+
+save_history_cache(history_cache)
 
 update_time = datetime.now(ZoneInfo("Asia/Taipei")).strftime("%H:%M:%S")
 result = pd.DataFrame(rows)
